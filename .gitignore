@@ -339,3 +339,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /Instalador
+/DriverAmqp.Sources/nuget.config

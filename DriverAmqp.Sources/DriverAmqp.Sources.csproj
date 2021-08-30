@@ -1,7 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.0.1</Version>
+    <RepositoryUrl>https://github.com/CemachMD/DriverAmqp</RepositoryUrl>
+    <Description>This is a class tools for handle conections with rabbitmq</Description>
   </PropertyGroup>
 
   <ItemGroup>
