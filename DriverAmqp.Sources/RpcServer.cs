@@ -3,7 +3,7 @@ using System.Threading;
 using System.Text;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-
+using System.Collections.Generic;
 
 namespace DriverAmqp.Sources
 {
@@ -11,11 +11,15 @@ namespace DriverAmqp.Sources
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private IModel channel;
+        private IModel _channel;
         private EventingBasicConsumer consumer;
 
         public delegate string Handler(string mensage);
         public event Handler HandlerMessage;
+
+        private string exchange;
+        private List<string> _bindings;
+        private bool _isRunning = false;
 
         public string response;
         
@@ -25,12 +29,53 @@ namespace DriverAmqp.Sources
         /// <param name="connection"></param>
         public RpcServer()
         {
-            
+            _bindings = new List<string>();
+            var amqp = WrapperConnection.GetInstance();
+            _channel = amqp.CreateChannel();
+        }
+
+        public RpcServer(IModel channel)
+        {
+            _bindings = new List<string>();
+            this._channel = channel;
+
+
+        }
+
+        public RpcServer(IModel channel , string exchange)
+        {
+            _bindings = new List<string>();
+            this._channel = channel;
+            this.exchange = exchange;
+
+
+        }
+        public RpcServer(IModel channel, string exchange, string routingKey)
+        {
+            _bindings = new List<string>();
+            this._channel = channel;
+            this.exchange = exchange;
+            _bindings.Add(routingKey);
         }
 
         public void Init()
-        {
+        { 
 
+            if (this._channel == null) 
+            {
+                var amqp = WrapperConnection.GetInstance();
+                _channel = amqp.CreateChannel();
+            }
+
+            if (this.exchange == null) this.exchange = Util.amqpConfig.amqp.exchange;
+            if (Util.amqpConfig != null)
+            {
+                foreach(var bing in Util.amqpConfig.amqp.bindings)
+                {
+                    var routing = $"{Util.amqpConfig.amqp.baseRoutingKey}.{bing}";
+                    _bindings.Add(routing);
+                }
+            }
         }
 
         public void Start()
@@ -39,16 +84,22 @@ namespace DriverAmqp.Sources
 
             if (WrapperConnection.GetAMQPConnection() != null)
             {
-                channel = WrapperConnection.GetAMQPConnection().CreateModel();
-                consumer = new EventingBasicConsumer(channel);
-                var queue = channel.QueueDeclare();
-                channel.QueueBind(queue.QueueName, Util.config_rabbitmq.amqp.exchange,
-                    $"{Util.config_rabbitmq.amqp.baseRoutingKey}.WatchdogPedidosProcessos.Json");
-                channel.BasicConsume(queue: queue.QueueName, autoAck: false, consumer: consumer);
-                log.Info(" [x] Awaiting RPC requests ");
-
                 
+                _channel.ExchangeDeclare(this.exchange, ExchangeType.Topic, true, false,null);
 
+                consumer = new EventingBasicConsumer(_channel);
+                
+                var queue = _channel.QueueDeclare();
+
+                foreach(var bing in _bindings)
+                {
+                    _channel.QueueBind(queue.QueueName, this.exchange, bing);
+                }
+                
+                _channel.BasicConsume(queue: queue.QueueName, autoAck: false, consumer: consumer);
+                _isRunning = true;
+                log.Info(" [x] Awaiting RPC requests ");
+                
                 consumer.Received += (model, ea) =>
                 {
                     log.Info(" Request Received ");
@@ -58,7 +109,7 @@ namespace DriverAmqp.Sources
                     var body = ea.Body;
 
                     var props = ea.BasicProperties;
-                    var replyProps = channel.CreateBasicProperties();
+                    var replyProps = _channel.CreateBasicProperties();
                     replyProps.CorrelationId = props.CorrelationId;
 
                     try
@@ -82,12 +133,12 @@ namespace DriverAmqp.Sources
 
                         //var responseBytes = Encoding.UTF8.GetBytes(response);
                         log.Info($"ReplyTo: {props.ReplyTo}");
-                        channel.BasicPublish(
-                            exchange: Util.config_rabbitmq.amqp.exchange,
+                        _channel.BasicPublish(
+                            exchange: Util.amqpConfig.amqp.exchange,
                             routingKey: props.ReplyTo,
                             basicProperties: replyProps,
                             body: responseBytes);
-                        channel.BasicAck(deliveryTag: ea.DeliveryTag,
+                        _channel.BasicAck(deliveryTag: ea.DeliveryTag,
                         multiple: false);
                     }
                 };
@@ -100,12 +151,17 @@ namespace DriverAmqp.Sources
 
             
         }
+
+        public bool IsRunning()
+        {
+            return _isRunning;
+        }
         public void Stop()
 		{
             
             consumer.OnCancel();
-            channel.Close();
-            channel.Dispose();
+            _channel.Close();
+            _channel.Dispose();
             
 		}
     }

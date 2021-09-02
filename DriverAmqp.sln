@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31410.357
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverAmqp", "DriverAmqp\DriverAmqp.csproj", "{AA59DE49-38CF-49BF-A845-BE3EBB1396B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DriverAmqp", "DriverAmqp\DriverAmqp.csproj", "{AA59DE49-38CF-49BF-A845-BE3EBB1396B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverAmqp.Sources", "DriverAmqp.Sources\DriverAmqp.Sources.csproj", "{089A6EA8-DE17-40B7-8AD0-2EC2871D02F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DriverAmqp.Sources", "DriverAmqp.Sources\DriverAmqp.Sources.csproj", "{089A6EA8-DE17-40B7-8AD0-2EC2871D02F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriverAmqp.Sources.Tests", "DriverAmqp.Sources.Tests\DriverAmqp.Sources.Tests.csproj", "{0F7959C1-D139-42D9-B664-0AFE67C9A4CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{089A6EA8-DE17-40B7-8AD0-2EC2871D02F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{089A6EA8-DE17-40B7-8AD0-2EC2871D02F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{089A6EA8-DE17-40B7-8AD0-2EC2871D02F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F7959C1-D139-42D9-B664-0AFE67C9A4CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F7959C1-D139-42D9-B664-0AFE67C9A4CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F7959C1-D139-42D9-B664-0AFE67C9A4CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F7959C1-D139-42D9-B664-0AFE67C9A4CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

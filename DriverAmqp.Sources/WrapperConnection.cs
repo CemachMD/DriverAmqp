@@ -7,24 +7,35 @@ namespace DriverAmqp.Sources
     public class WrapperConnection
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private static WrapperConnection _instance;
-        private static readonly object _lock = new object();
+        private static readonly object _lock = new ();
         private readonly ConnectionFactory factory;
         private static IConnection conn;
 
+
         private WrapperConnection()
         {
-            this.factory = new ConnectionFactory()
+            if(Util.amqpConfig!=null)
             {
-                HostName = Util.config_rabbitmq.hostName,
-                UserName = Util.config_rabbitmq.userName,
-                Password = Util.config_rabbitmq.password,
-                VirtualHost = Util.config_rabbitmq.virtualHost,
-            };
-            if (Util.config_rabbitmq.virtualHost == null)
-            {
-                factory.VirtualHost = "/";
+                this.factory = new ConnectionFactory()
+                {
+                    HostName = Util.amqpConfig.hostName,
+                    UserName = Util.amqpConfig.userName,
+                    Password = Util.amqpConfig.password,
+                    VirtualHost = Util.amqpConfig.virtualHost,
+                };
+                if (Util.amqpConfig.virtualHost == null) factory.VirtualHost = "/";
             }
+            else
+            {
+                this.factory = new ConnectionFactory()
+                {
+                    HostName = "localhost",
+                };
+            }
+                
+
             factory.AutomaticRecoveryEnabled = true;
             factory.NetworkRecoveryInterval = TimeSpan.FromSeconds(5);
             TryConnect();
@@ -64,10 +75,9 @@ namespace DriverAmqp.Sources
             {
                 lock (_lock)
                 {
-                    if(_instance == null)
-                    {
+                    if (_instance == null)
+                        Util.LoadAmqpConfig();
                         _instance = new WrapperConnection();
-                    }
                 }
             }
 
@@ -77,6 +87,11 @@ namespace DriverAmqp.Sources
         public static void Close()
         {
             conn.Close();
+        }
+
+        public IModel CreateChannel()
+        {
+            return conn.CreateModel();
         }
         
     }

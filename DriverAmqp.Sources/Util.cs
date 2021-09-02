@@ -10,13 +10,13 @@ namespace DriverAmqp.Sources
 		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 		private static readonly string basePath = AppDomain.CurrentDomain.BaseDirectory;
-		private static readonly string pathRabbitmqConfig = @"config_rabbitmq.json";
+		private static readonly string pathRabbitmqConfig = @"amqpConfig.json";
 
-		public static ConfigRabbitmq config_rabbitmq;
+		public static AmqpConfig amqpConfig;
 
-		public static void ReadJsonRabbitmqConfig()
+		public static void LoadAmqpConfig()
 		{
-			log.Info($"Reading rabbimq config: {Path.Combine(basePath, pathRabbitmqConfig)}");
+			log.Info($"Reading Amqp Config File: {Path.Combine(basePath, pathRabbitmqConfig)}");
 			//Console.WriteLine("Reading rabbimq config: {0}", Path.Combine(basePath, pathRabbitmqConfig));
 			if (File.Exists(Path.Combine(basePath, pathRabbitmqConfig)))
 			{
@@ -26,12 +26,12 @@ namespace DriverAmqp.Sources
 
 					try
 					{
-						config_rabbitmq = JsonConvert.DeserializeObject<ConfigRabbitmq>(json);
+						amqpConfig = JsonConvert.DeserializeObject<AmqpConfig>(json);
 
 
-						if (config_rabbitmq.virtualHost == "")
+						if (amqpConfig.virtualHost == "")
 						{
-							config_rabbitmq.virtualHost = null;
+							amqpConfig.virtualHost = null;
 						}
 					}
 					catch (Exception e)
@@ -43,7 +43,13 @@ namespace DriverAmqp.Sources
 			else
 			{
 				log.Error("Error: Config Rabbitmq .Json doesn't exist !!");
-				
+				amqpConfig = new AmqpConfig() { amqp = new Amqp() };
+				amqpConfig.hostName = "localhost";
+				amqpConfig.amqp.exchange = "amq.topic";
+				amqpConfig.amqp.baseRoutingKey = "amq.topic";
+				amqpConfig.amqp.bindings = new System.Collections.Generic.List<string>();
+				amqpConfig.amqp.bindings.Add("request");
+				SaveJsonFile(amqpConfig);
 			}
 		}
 
@@ -51,19 +57,18 @@ namespace DriverAmqp.Sources
         {
 			return File.Exists(Path.Combine(basePath, pathRabbitmqConfig));
         }
-		public static void SaveJsonFile(object item)
+		public static void SaveJsonFile(object data)
 		{
 			var path = Path.Combine(basePath, pathRabbitmqConfig);
 
-			if (File.Exists(path))
-				File.Delete(path);
+			if (File.Exists(path)) File.Delete(path);
 			
 			using (StreamWriter file = File.CreateText(path))
 			{
 				JsonSerializer serializer = new JsonSerializer();
 				//serialize object directly into file stream	
 				serializer.Formatting = Formatting.Indented;
-				serializer.Serialize(file, item);
+				serializer.Serialize(file, data);
 			}
 		}
 	}

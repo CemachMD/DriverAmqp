@@ -17,35 +17,70 @@ namespace DriverAmqp.Sources
 	public class RpcClient
 	{
         private readonly IConnection connection;
-        private readonly  IModel channel;
-        private readonly string replyQueueName;
-        private readonly EventingBasicConsumer consumer;
+        private readonly  IModel _channel;
+        private string replyQueueName;
+        private EventingBasicConsumer consumer;
         private readonly BlockingCollection<string> respQueue = new BlockingCollection<string>();
-        private readonly IBasicProperties props;   
+        private IBasicProperties props;
+
+        private readonly string _exchange, _routingKey;
 
         public RpcClient()
         {
+            Util.LoadAmqpConfig();
 			var factory = new ConnectionFactory()
 			{
-				HostName = Util.config_rabbitmq.hostName,
-				UserName = Util.config_rabbitmq.userName,
-				Password = Util.config_rabbitmq.password,
-                VirtualHost=Util.config_rabbitmq.virtualHost,
+				HostName = Util.amqpConfig.hostName,
+				UserName = Util.amqpConfig.userName,
+				Password = Util.amqpConfig.password,
+                VirtualHost=Util.amqpConfig.virtualHost,
 			};
-            if (Util.config_rabbitmq.virtualHost == null)
+            if (Util.amqpConfig.virtualHost == null)
             {
                 factory.VirtualHost = "/";
             }
 
             connection = factory.CreateConnection();
-			channel = connection.CreateModel();
-            replyQueueName = channel.QueueDeclare().QueueName;
-            consumer = new EventingBasicConsumer(channel);   
+            _channel = connection.CreateModel();
+            this._exchange = Util.amqpConfig.amqp.exchange;
+            this._routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
+                  
+        }
 
-            channel.QueueBind(replyQueueName, Util.config_rabbitmq.amqp.exchange, replyQueueName);
+        public RpcClient(IModel channel)
+        {
+            this._channel = channel;
+            this._exchange = Util.amqpConfig.amqp.exchange;
+            this._routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
 
-            props = channel.CreateBasicProperties();
+        }
+        public RpcClient(IModel channel, string exchange)
+        {
+
+            this._channel = channel;
+            this._exchange = exchange;
+            this._routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
+
+        }
+        public RpcClient(IModel channel, string exchange, string routingKey)
+        {
+
+            this._channel = channel;
+            this._exchange = exchange;
+            this._routingKey = routingKey;
+
+        }
+
+        public void Start()
+        {
+            replyQueueName = _channel.QueueDeclare().QueueName;
+            consumer = new EventingBasicConsumer(_channel);
+
+            _channel.QueueBind(replyQueueName, this._exchange, replyQueueName);
+
             var correlationId = Guid.NewGuid().ToString();
+
+            props = _channel.CreateBasicProperties();
             props.CorrelationId = correlationId;
             props.ReplyTo = replyQueueName;
 
@@ -57,20 +92,25 @@ namespace DriverAmqp.Sources
                 {
                     respQueue.Add(response);
                 }
-            };            
+            };
         }
 
         public string Call<T>(T message)
         {
-            var resp = "";            
+            return Call<T>(message, this._exchange, this._routingKey);
+        }
+
+        public string Call<T>(T message, string exchange, string routingKey)
+        {
+            var resp = string.Empty;            
             var messageBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
 
-            channel.BasicPublish(
-                exchange: Util.config_rabbitmq.amqp.exchange,
-                routingKey: $"{Util.config_rabbitmq.amqp.baseRoutingKey}.WatchdogPedidosProcessos.Json",
+            _channel.BasicPublish(
+                exchange: exchange,
+                routingKey: routingKey,
                 basicProperties: this.props,
                 body: messageBytes);
-            channel.BasicConsume(
+            _channel.BasicConsume(
                     consumer: this.consumer,
                     queue: this.replyQueueName,
                     autoAck: true);
@@ -87,8 +127,8 @@ namespace DriverAmqp.Sources
 
         public void Close()
         {
-            channel.Close();
-            connection.Close();
+            _channel.Close();
+            if(connection!=null) connection.Close();
         }
 
     }

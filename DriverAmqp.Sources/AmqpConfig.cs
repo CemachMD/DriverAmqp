@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DriverAmqp.Sources
 {
-	public class ConfigRabbitmq
+	public class AmqpConfig
 	{
 		public string hostName;
 		public string userName;
@@ -18,7 +18,7 @@ namespace DriverAmqp.Sources
 	}
 	public class Amqp
 	{
-		public string[] bindings;
+		public List<string> bindings;
 		public string baseRoutingKey;
 		public string exchange;
 		public Queue queue;

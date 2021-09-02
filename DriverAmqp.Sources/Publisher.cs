@@ -7,30 +7,53 @@ namespace DriverAmqp.Sources
     public class Publisher
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        private IModel channel;
+        private IModel _channel;
+        private string _exchange, _routingKey;
         public Publisher()
         {
             
         }
+        public Publisher(IModel channel)
+        {
+            this._channel = channel;
+        }
+        public Publisher(IModel channel, string exchange)
+        {
+            this._channel = channel;
+            this._exchange = exchange;
+        }
+        public Publisher(IModel channel, string exchange, string routingKey)
+        {
+            this._channel = channel;
+            this._exchange = exchange;
+            this._routingKey = routingKey;
+        }
 
         public void Init()
         {
-            this.channel = WrapperConnection.GetAMQPConnection().CreateModel();
+            if(this._channel==null)
+                this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
         }
 
         public void Start()
         {
 
         }
+
+        public void Send(string message)
+        {
+            Send(message, _exchange, _routingKey);
+        }
+
         public void Send(string message,string exchange, string routingKey)
         {
             if(WrapperConnection.GetAMQPConnection() != null)
             {
                 var messageBytes = Encoding.UTF8.GetBytes(message);
-                if (this.channel != null)
+                if (this._channel != null)
                     try
                     {
-                        this.channel.BasicPublish(exchange, routingKey, basicProperties: null, body: messageBytes);
+                        this._channel.BasicPublish(exchange, routingKey, basicProperties: null, body: messageBytes);
                     }
                     catch (Exception e)
                     {
@@ -43,7 +66,7 @@ namespace DriverAmqp.Sources
                     try
                     {
                         if (WrapperConnection.GetAMQPConnection() != null)
-                            this.channel = WrapperConnection.GetAMQPConnection().CreateModel();
+                            this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
                     }
                     catch (Exception e)
                     {
@@ -56,7 +79,7 @@ namespace DriverAmqp.Sources
         }
         public void Close()
         {
-            this.channel.Close();
+            this._channel.Close();
         }
     }
 }

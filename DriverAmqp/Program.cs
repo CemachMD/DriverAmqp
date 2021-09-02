@@ -8,10 +8,22 @@ namespace DriverAmqp
         static void Main(string[] args)
         {
 
+            //var amqp = WrapperConnection.GetInstance();
 
+            //var ch = amqp.CreateChannel();
 
-            Console.WriteLine("Hello World!");
+            var rpcServer = new RpcServer();
+            rpcServer.HandlerMessage += RpcServer_HandlerMessage;
+            rpcServer.Init();
+            rpcServer.Start();
+
+            Console.WriteLine("Iniciado");
             Console.ReadKey();
+        }
+
+        private static string RpcServer_HandlerMessage(string mensage)
+        {
+            throw new NotImplementedException();
         }
     }
 }

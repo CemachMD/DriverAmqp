@@ -9,7 +9,7 @@ namespace DriverAmqp.Sources
     public class Subscriber
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        private IModel channel;
+        private IModel _channel;
 
         public delegate void Handler(string mensage);
         public event Handler HandlerMessage;
@@ -19,9 +19,15 @@ namespace DriverAmqp.Sources
 
         }
 
+        public Subscriber(IModel channel)
+        {
+            this._channel = channel;
+        }
+
         public void Init()
         {
-            this.channel = WrapperConnection.GetAMQPConnection().CreateModel();
+            if(this._channel==null)
+                this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
         }
 
         public void Start()
@@ -31,7 +37,7 @@ namespace DriverAmqp.Sources
 
         public void Close()
         {
-            this.channel.Close();
+            this._channel.Close();
         }
 
         public void Listen()
@@ -39,16 +45,16 @@ namespace DriverAmqp.Sources
             if (WrapperConnection.GetAMQPConnection() != null)
             {
                 
-                if (this.channel != null)
+                if (this._channel != null)
                     try
                     {
-                        var consumer = new EventingBasicConsumer(this.channel);
-                        var queue = channel.QueueDeclare();
+                        var consumer = new EventingBasicConsumer(this._channel);
+                        var queue = _channel.QueueDeclare();
 
-                        this.channel.QueueBind(queue.QueueName, Util.config_rabbitmq.amqp.exchange,
-                            $"{Util.config_rabbitmq.amqp.baseRoutingKey}.StreamDataEstadosEquipamento.Json");
+                        this._channel.QueueBind(queue.QueueName, Util.amqpConfig.amqp.exchange,
+                            $"{Util.amqpConfig.amqp.baseRoutingKey}.StreamDataEstadosEquipamento.Json");
 
-                        this.channel.BasicConsume(queue: queue.QueueName, autoAck: true, consumer: consumer);
+                        this._channel.BasicConsume(queue: queue.QueueName, autoAck: true, consumer: consumer);
 
                         log.Info(" [x] Awaiting RPC requests ");
 
@@ -57,7 +63,7 @@ namespace DriverAmqp.Sources
                             var body = ea.Body;
 
                             var props = ea.BasicProperties;
-                            var replyProps = channel.CreateBasicProperties();
+                            var replyProps = _channel.CreateBasicProperties();
                             replyProps.CorrelationId = props.CorrelationId;
 
                             try
@@ -88,7 +94,7 @@ namespace DriverAmqp.Sources
                     try
                     {
                         if (WrapperConnection.GetAMQPConnection() != null)
-                            this.channel = WrapperConnection.GetAMQPConnection().CreateModel();
+                            this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
                     }
                     catch (Exception e)
                     {
