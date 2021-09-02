@@ -3,9 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
     <RepositoryUrl>https://github.com/CemachMD/DriverAmqp</RepositoryUrl>
     <Description>This is a class tools for handle conections with rabbitmq</Description>
+    <Authors>Cesar Choquehuanca</Authors>
+    <Company>MDM Sistemas</Company>
+    <Product>Driver Amqp</Product>
+    <Copyright>MIT</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
