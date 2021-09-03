@@ -134,7 +134,7 @@ namespace DriverAmqp.Sources
                         //var responseBytes = Encoding.UTF8.GetBytes(response);
                         log.Info($"ReplyTo: {props.ReplyTo}");
                         _channel.BasicPublish(
-                            exchange: Util.amqpConfig.amqp.exchange,
+                            exchange: this.exchange,
                             routingKey: props.ReplyTo,
                             basicProperties: replyProps,
                             body: responseBytes);
