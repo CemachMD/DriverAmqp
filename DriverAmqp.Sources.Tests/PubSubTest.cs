@@ -10,34 +10,37 @@ namespace DriverAmqp.Sources.Tests
 {
     public class PubSubTest
     {
+        WrapperConnection amqp;
+        public PubSubTest()
+        {
+            amqp = WrapperConnection.GetInstance();
+        }
+
         [Fact]
         public void Run()
         {
             //Arrange
-            var amqp = WrapperConnection.GetInstance();
-
             var chPub = amqp.CreateChannel();
             var chSub = amqp.CreateChannel();
 
             var sub = new Subscriber(chSub);
             sub.HandlerMessage += Sub_HandlerMessage;
-            sub.Init();
-            sub.Start();
-            sub.Listen();
+
 
             var pub = new Publisher(chPub);
-            pub.Init();
-            pub.Start();
-            pub.Send(JsonConvert.SerializeObject(new Message() {nome="cesae",idade="23" }));
+            
 
             //Act
             sub.Init();
             sub.Start();
             sub.Listen();
 
-
+            pub.Init();
+            pub.Start();
+            pub.Send(JsonConvert.SerializeObject(new Message() { nome = "cesae", idade = "23" }));
 
             //Assert
+
         }
 
         private void Sub_HandlerMessage(string mensage)
