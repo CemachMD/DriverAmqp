@@ -1,12 +1,12 @@
 ﻿{
-  "hostName": "127.0.0.1",
+  "hostName": "172.16.50.51",
   "userName": "anaq",
   "password": "anaq",
   "virtualHost": null,
   "amqp": {
-    "bindings": ["TesteRouting.Demo"],
+    "bindings": ["Routing.Demo"],
     "baseRoutingKey":"TESTE",
-    "exchange": "TESTE.BING",
+    "exchange": "TESTE.EXCHANGE",
     "queue": {
       "name": "",
       "options": {
