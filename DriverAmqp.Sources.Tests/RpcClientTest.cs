@@ -6,11 +6,16 @@ namespace DriverAmqp.Sources.Tests
 {
     public class RpcClientTest
     {
+        WrapperConnection amqp;
+        public RpcClientTest()
+        {
+            amqp = WrapperConnection.GetInstance();
+        }
         [Fact]
         public void RpcClientRun()
         {
             //Arrange
-            var amqp = WrapperConnection.GetInstance();
+            
 
             var chServer = amqp.CreateChannel();
             var rpcServer = new RpcServer(chServer,"API.SQL","api.routingkey");
