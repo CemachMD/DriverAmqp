@@ -33,6 +33,9 @@ namespace DriverAmqp.Sources
         {
             if(this._channel==null)
                 this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
+            if (this._exchange == null) _exchange = Util.amqpConfig.amqp.exchange;
+            if (this._routingKey == null)
+                _routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
         }
 
         public void Start()
