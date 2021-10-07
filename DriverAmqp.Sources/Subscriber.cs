@@ -16,6 +16,12 @@ namespace DriverAmqp.Sources
 
         private string _exchange, _routingKey;
 
+        private bool _saveFileBuffer = false;
+        public bool SaveFileBuffer { 
+            get { return _saveFileBuffer; } 
+            set { _saveFileBuffer = value; } 
+        }
+
         public Subscriber()
         {
 
@@ -84,6 +90,12 @@ namespace DriverAmqp.Sources
                             try
                             {
                                 string message = Encoding.UTF8.GetString(body.ToArray());
+
+                                if (_saveFileBuffer)
+                                {
+                                    Util.SaveFile(message, Util.BufferSubscriberFilePath);
+                                }
+
                                 //log.Info($"Request: {message}");
                                 HandlerMessage(message);
 

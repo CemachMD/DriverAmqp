@@ -93,6 +93,11 @@ namespace DriverAmqp.Sources
         {
             return conn.CreateModel();
         }
+
+        public static bool IsConnected()
+        {
+            return conn.IsOpen;
+        }
         
     }
 }

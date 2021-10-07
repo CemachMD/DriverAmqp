@@ -11,8 +11,11 @@ namespace DriverAmqp.Sources
 
 		private static readonly string basePath = AppDomain.CurrentDomain.BaseDirectory;
 		private static readonly string pathRabbitmqConfig = @"amqpConfig.json";
+		private static readonly string bufferSubscriberNameFile = @"BufferSubscriber.json";
 
 		public static AmqpConfig amqpConfig;
+		public static string BasePath { get => basePath; }
+		public static string BufferSubscriberFilePath { get => Path.Combine(basePath,bufferSubscriberNameFile); }
 
 		public static void LoadAmqpConfig()
 		{
@@ -61,9 +64,14 @@ namespace DriverAmqp.Sources
 		{
 			var path = Path.Combine(basePath, pathRabbitmqConfig);
 
-			if (File.Exists(path)) File.Delete(path);
-			
-			using (StreamWriter file = File.CreateText(path))
+			SaveJsonFile(data, path);
+		}
+
+		public static void SaveJsonFile(object data, string pathFile)
+		{
+			if (File.Exists(pathFile)) File.Delete(pathFile);
+
+			using (StreamWriter file = File.CreateText(pathFile))
 			{
 				JsonSerializer serializer = new JsonSerializer();
 				//serialize object directly into file stream	
@@ -71,5 +79,12 @@ namespace DriverAmqp.Sources
 				serializer.Serialize(file, data);
 			}
 		}
+		public static void SaveFile(string data, string pathFile)
+        {
+			using (StreamWriter writer = new StreamWriter(pathFile))
+            {
+				writer.Write(data);
+            }
+        }
 	}
 }

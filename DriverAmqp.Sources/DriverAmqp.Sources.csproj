@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.0.5</Version>
+    <Version>1.0.1</Version>
     <RepositoryUrl>https://github.com/CemachMD/DriverAmqp</RepositoryUrl>
     <Description>This is a class tools for handle conections with rabbitmq</Description>
     <Authors>Cesar Choquehuanca</Authors>
