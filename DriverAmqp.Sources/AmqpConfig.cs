@@ -9,28 +9,28 @@ namespace DriverAmqp.Sources
 {
 	public class AmqpConfig
 	{
-		public string hostName;
-		public string userName;
-		public string password;
-		public string virtualHost;
-		public Amqp amqp;
+		public string hostName { get; set; }
+		public string userName { get; set; }
+		public string password { get; set; }
+		public string virtualHost { get; set; }
+		public Amqp amqp { get; set; }
 
 	}
 	public class Amqp
 	{
-		public List<string> bindings;
-		public string baseRoutingKey;
-		public string exchange;
-		public Queue queue;
+		public List<string> bindings { get; set; }
+		public string baseRoutingKey { get; set; }
+		public string exchange { get; set; }
+		public Queue queue { get; set; }
 	}
 	public class Queue
 	{
-		public string name;
-		public Options options;
+		public string name { get; set; }
+		public Options options { get; set; }
 	}
 	public class Options
 	{
-		public bool durable;
-		public bool autoDelete;
+		public bool durable { get; set; }
+		public bool autoDelete { get; set; }
 	}
 }

@@ -13,10 +13,18 @@ namespace DriverAmqp.Sources.Tests
     {
         Message message;
         WrapperConnection amqp;
+        string exchange;
+        string routinKey;
+
         public PubSubTest()
         {
             message = null;
+            var amqpConfig = Util.LoadAmqpConfig();
             amqp = WrapperConnection.GetInstance();
+            amqp.SetConfig = amqpConfig;
+            amqp.Connect();
+            exchange = "API.SQL";
+            routinKey = "routingKeyPubSub";
         }
 
         [Fact]
@@ -24,12 +32,17 @@ namespace DriverAmqp.Sources.Tests
         {
             //Arrange
             var chPub = amqp.CreateChannel();
-            var chSub = amqp.CreateChannel();
 
-            var sub = new Subscriber(chSub, "API.SQL", "routingKeyPubSub");
+            var sub = new Subscriber();
+            sub.SetConnection = amqp.GetConnection;
+            sub.SetExchange = exchange;
+            sub.AddRoutingKey( routinKey);
             sub.HandlerMessage += Sub_HandlerMessage;
 
-            var pub = new Publisher(chPub, "API.SQL", "routingKeyPubSub");
+            var pub = new Publisher();
+            pub.SetConnection = amqp.GetConnection;
+            pub.SetExchange = exchange;
+            pub.SetRoutingKey = routinKey;
 
             //Act
             sub.Init();
@@ -40,7 +53,7 @@ namespace DriverAmqp.Sources.Tests
             pub.Start();
 
             var _myMessage = new Message() { nome = "cesae", idade = "23" };
-            pub.Send(JsonConvert.SerializeObject(_myMessage));
+            pub.Publish(JsonConvert.SerializeObject(_myMessage));
 
             System.Threading.Thread.Sleep(2000);
             //Assert

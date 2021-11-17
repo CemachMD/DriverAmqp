@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -8,13 +9,17 @@ namespace DriverAmqp.Sources
 {
     public class Subscriber
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        private IConnection _conn;
         private IModel _channel;
+
 
         public delegate void Handler(string mensage);
         public event Handler HandlerMessage;
 
-        private string _exchange, _routingKey;
+        private string _exchange;
+
+        private List<string> _bindings;
 
         private bool _saveFileBuffer = false;
         public bool SaveFileBuffer { 
@@ -24,32 +29,71 @@ namespace DriverAmqp.Sources
 
         public Subscriber()
         {
-
+            _bindings = new List<string>();
         }
 
-        public Subscriber(IModel channel)
+        public Subscriber(IConnection connection)
         {
-            this._channel = channel;
+            _bindings = new List<string>();
+            _conn = connection;
         }
-        public Subscriber(IModel channel,string exchange)
+
+        public Subscriber(IConnection connection, string exchange)
         {
-            this._channel = channel;
-            this._exchange = exchange;
+            _bindings = new List<string>();
+            _conn = connection;
+            _exchange = exchange;
         }
-        public Subscriber(IModel channel,string exchange, string routingKey)
+        public Subscriber(IConnection connection, string exchange, string routingKey)
         {
-            this._channel = channel;
+            _bindings = new List<string>();
+            this._conn = connection;
             this._exchange = exchange;
-            this._routingKey = routingKey;
+            _bindings.Add( routingKey);
+        }
+
+        /// <summary>
+        /// Set a active connection to the RabbitMQ
+        /// </summary>
+        public IConnection SetConnection
+        {
+            set
+            {
+                if (_conn == null)
+                    _conn = value;
+            }
+        }
+
+        /// <summary>
+        /// Set a name of the durable topic Exchange
+        /// </summary>
+        public string SetExchange
+        {
+            set
+            {
+                if (_exchange != value)
+                    _exchange = value;
+            }
+        }
+
+        public void AddRoutingKey(string routingKey)
+        {
+            _bindings.Add(routingKey);
         }
 
         public void Init()
         {
-            if(this._channel==null)
-                this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
-            if (this._exchange == null) _exchange = Util.amqpConfig.amqp.exchange;
-            if (this._routingKey == null)
-                _routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
+            try
+            {
+                _channel = _conn.CreateModel();
+                _channel.ExchangeDeclare(_exchange, ExchangeType.Topic, true, false, null);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+            
         }
 
         public void Start()
@@ -59,25 +103,28 @@ namespace DriverAmqp.Sources
 
         public void Close()
         {
-            this._channel.Close();
+            _channel.Close();
         }
 
         public void Listen()
         {
-            if (WrapperConnection.GetAMQPConnection() != null)
+            if (_conn != null)
             {
                 
-                if (this._channel != null)
+                
+                if (_channel != null)
                     try
                     {
                         var consumer = new EventingBasicConsumer(this._channel);
                         var queue = _channel.QueueDeclare();
 
-                        this._channel.QueueBind(queue.QueueName, _exchange,_routingKey);
+                        foreach(var bind in _bindings)
+                        {
+                            _channel.QueueBind(queue.QueueName, _exchange, bind);
+                        }
+                        
 
-                        this._channel.BasicConsume(queue: queue.QueueName, autoAck: true, consumer: consumer);
-
-                        //log.Info(" [x] Awaiting RPC requests ");
+                        _channel.BasicConsume(queue: queue.QueueName, autoAck: true, consumer: consumer);
 
                         consumer.Received += (model, ea) =>
                         {
@@ -96,15 +143,13 @@ namespace DriverAmqp.Sources
                                     Util.SaveFile(message, Util.BufferSubscriberFilePath);
                                 }
 
-                                //log.Info($"Request: {message}");
                                 HandlerMessage(message);
 
-                                //log.Info($"Response: {response}");
                             }
                             catch (Exception e)
                             {
-                                log.Error(" [.] " + e.Message);
-                                //response.error = true;
+                                Console.WriteLine(" [.] " + e.Message);
+
                             }
                             
 
@@ -113,19 +158,19 @@ namespace DriverAmqp.Sources
                     catch (Exception e)
                     {
 
-                        log.Error("Error Listen: " + e.Message);
+                        Console.WriteLine(e);
                     }
 
                 else
                 {
                     try
                     {
-                        if (WrapperConnection.GetAMQPConnection() != null)
-                            this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
+                        if (_conn != null)
+                            this._channel = _conn.CreateModel();
                     }
                     catch (Exception e)
                     {
-                        log.Error("Error Publisher: " + e.Message);
+                        Console.WriteLine(e);
                     }
                 }
             }

@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
-using System.IO;
 using System.Threading.Tasks;
 
 
@@ -16,67 +14,75 @@ namespace DriverAmqp.Sources
     /// </summary>
 	public class RpcClient
 	{
-        private readonly IConnection connection;
-        private readonly  IModel _channel;
+        private IConnection connection;
+        private IModel _channel;
         private string replyQueueName;
         private EventingBasicConsumer consumer;
         private readonly BlockingCollection<string> respQueue = new BlockingCollection<string>();
         private IBasicProperties props;
 
-        private readonly string _exchange, _routingKey;
+        private string _exchange, _routingKey;
 
         public RpcClient()
         {
-            Util.LoadAmqpConfig();
-			var factory = new ConnectionFactory()
-			{
-				HostName = Util.amqpConfig.hostName,
-				UserName = Util.amqpConfig.userName,
-				Password = Util.amqpConfig.password,
-                VirtualHost=Util.amqpConfig.virtualHost,
-			};
-            if (Util.amqpConfig.virtualHost == null)
-            {
-                factory.VirtualHost = "/";
-            }
+                              
+        }
 
-            connection = factory.CreateConnection();
-            _channel = connection.CreateModel();
-            this._exchange = Util.amqpConfig.amqp.exchange;
-            this._routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
-                  
+        public string SetExchange
+        {
+            set
+            {
+                _exchange = value;
+            }
+        }
+
+        public IConnection SetConnection
+        {
+            set
+            {
+                connection = value;
+            }
+        }
+
+        public string SetRoutingKey
+        {
+            set
+            {
+                _routingKey = value;
+            }
         }
 
         public RpcClient(IModel channel)
         {
-            this._channel = channel;
-            this._exchange = Util.amqpConfig.amqp.exchange;
-            this._routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
+            _channel = channel;
 
         }
         public RpcClient(IModel channel, string exchange)
         {
 
-            this._channel = channel;
-            this._exchange = exchange;
-            this._routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
+            _channel = channel;
+            _exchange = exchange;
+
 
         }
         public RpcClient(IModel channel, string exchange, string routingKey)
         {
 
-            this._channel = channel;
-            this._exchange = exchange;
-            this._routingKey = routingKey;
+            _channel = channel;
+            _exchange = exchange;
+            _routingKey = routingKey;
 
         }
 
         public void Start()
         {
+            if (_channel == null)
+                _channel = connection.CreateModel();
+
             replyQueueName = _channel.QueueDeclare().QueueName;
             consumer = new EventingBasicConsumer(_channel);
 
-            _channel.QueueBind(replyQueueName, this._exchange, replyQueueName);
+            _channel.QueueBind(replyQueueName, _exchange, replyQueueName);
 
             var correlationId = Guid.NewGuid().ToString();
 
@@ -97,7 +103,7 @@ namespace DriverAmqp.Sources
 
         public string Call<T>(T message)
         {
-            return Call<T>(message, this._exchange, this._routingKey);
+            return Call<T>(message, _exchange, _routingKey);
         }
 
         public string Call<T>(T message, string exchange, string routingKey)

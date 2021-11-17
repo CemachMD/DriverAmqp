@@ -6,67 +6,76 @@ namespace DriverAmqp.Sources
 {
     public class WrapperConnection
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         private static WrapperConnection _instance;
-        private static readonly object _lock = new ();
-        private readonly ConnectionFactory factory;
-        private static IConnection conn;
-
+        private static readonly object _lock = new object();
+        private ConnectionFactory factory;
+        private static IConnection _conn;
+        private static AmqpConfig _amqpConfig;
 
         private WrapperConnection()
+        {          
+
+        }
+
+        private void CreateFactory()
         {
-            if(Util.amqpConfig!=null)
+            this.factory = new ConnectionFactory()
             {
-                this.factory = new ConnectionFactory()
-                {
-                    HostName = Util.amqpConfig.hostName,
-                    UserName = Util.amqpConfig.userName,
-                    Password = Util.amqpConfig.password,
-                    VirtualHost = Util.amqpConfig.virtualHost,
-                };
-                if (Util.amqpConfig.virtualHost == null) factory.VirtualHost = "/";
-            }
-            else
-            {
-                this.factory = new ConnectionFactory()
-                {
-                    HostName = "localhost",
-                };
-            }
+                HostName = _amqpConfig.hostName,
+                UserName = _amqpConfig.userName,
+                Password = _amqpConfig.password,
                 
+            };
+            if (_amqpConfig.virtualHost != null)
+                factory.VirtualHost = _amqpConfig.virtualHost; 
 
             factory.AutomaticRecoveryEnabled = true;
             factory.NetworkRecoveryInterval = TimeSpan.FromSeconds(5);
-            TryConnect();
-            /*
-            Thread tryConnect = new Thread(TryConnect);
-            tryConnect.Start();
-            */
-            
         }
 
+        public void Connect()
+        {
+            CreateFactory();
+            TryConnect();
+            
+        }
         private void TryConnect()
         {
             try
             {
                 factory.RequestedConnectionTimeout = TimeSpan.FromSeconds(5);
-                conn = this.factory.CreateConnection();
-                log.Info("Connection created Successfully!");
+                _conn = this.factory.CreateConnection();
+                Console.WriteLine("Connection created Successfully!");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                log.Error("Error to connect RabbitMQ: " + e.Message);
-                Thread.Sleep(1000);
+                Console.WriteLine("Error to connect RabbitMQ: " + e.Message);
+                Thread.Sleep(5000);
                 TryConnect();
             }
         }
 
-        public static IConnection GetAMQPConnection()
+        /// <summary>
+        /// Return the current Amqp Connectio to the RabbitMQ
+        /// </summary>
+        public IConnection GetConnection
         {
-            //log.Info("Getting AMQP Connection");
+            get
+            {
+                lock (_lock)
+                {
+                    return _conn;
+                }
+            }
+        }
 
-            return conn;
+        public AmqpConfig SetConfig
+        {
+            set
+            {
+                _amqpConfig = value;
+            }
         }
 
         public static WrapperConnection GetInstance()
@@ -76,7 +85,6 @@ namespace DriverAmqp.Sources
                 lock (_lock)
                 {
                     if (_instance == null)
-                        Util.LoadAmqpConfig();
                         _instance = new WrapperConnection();
                 }
             }
@@ -84,19 +92,19 @@ namespace DriverAmqp.Sources
             return _instance;
         }
 
-        public static void Close()
+        public void Close()
         {
-            conn.Close();
+            _conn.Close();
         }
 
         public IModel CreateChannel()
         {
-            return conn.CreateModel();
+            return _conn.CreateModel();
         }
 
-        public static bool IsConnected()
+        public bool IsConnected()
         {
-            return conn.IsOpen;
+            return _conn.IsOpen;
         }
         
     }

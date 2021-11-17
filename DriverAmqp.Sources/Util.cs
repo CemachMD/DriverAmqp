@@ -7,7 +7,6 @@ namespace DriverAmqp.Sources
 {
     public static class Util
     {
-		private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 		private static readonly string basePath = AppDomain.CurrentDomain.BaseDirectory;
 		private static readonly string pathRabbitmqConfig = @"amqpConfig.json";
@@ -17,10 +16,9 @@ namespace DriverAmqp.Sources
 		public static string BasePath { get => basePath; }
 		public static string BufferSubscriberFilePath { get => Path.Combine(basePath,bufferSubscriberNameFile); }
 
-		public static void LoadAmqpConfig()
+		public static AmqpConfig LoadAmqpConfig()
 		{
-			log.Info($"Reading Amqp Config File: {Path.Combine(basePath, pathRabbitmqConfig)}");
-			//Console.WriteLine("Reading rabbimq config: {0}", Path.Combine(basePath, pathRabbitmqConfig));
+			Console.WriteLine("Reading rabbimq config: {0}", Path.Combine(basePath, pathRabbitmqConfig));
 			if (File.Exists(Path.Combine(basePath, pathRabbitmqConfig)))
 			{
 				using (StreamReader str = new StreamReader(Path.Combine(basePath, pathRabbitmqConfig)))
@@ -45,7 +43,7 @@ namespace DriverAmqp.Sources
 			}	
 			else
 			{
-				log.Error("Error: Config Rabbitmq .Json doesn't exist !!");
+                Console.WriteLine("Error: Config Rabbitmq .Json doesn't exist !!");
 				amqpConfig = new AmqpConfig() { amqp = new Amqp() };
 				amqpConfig.hostName = "localhost";
 				amqpConfig.amqp.exchange = "amq.topic";
@@ -54,6 +52,8 @@ namespace DriverAmqp.Sources
 				amqpConfig.amqp.bindings.Add("request");
 				SaveJsonFile(amqpConfig);
 			}
+
+			return amqpConfig;
 		}
 
 		public static bool CheckAMQPConfigFIle()
@@ -79,6 +79,7 @@ namespace DriverAmqp.Sources
 				serializer.Serialize(file, data);
 			}
 		}
+
 		public static void SaveFile(string data, string pathFile)
         {
 			using (StreamWriter writer = new StreamWriter(pathFile))

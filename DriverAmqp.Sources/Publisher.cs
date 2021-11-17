@@ -6,36 +6,73 @@ namespace DriverAmqp.Sources
 {
     public class Publisher
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private IModel _channel;
         private string _exchange, _routingKey;
+        private IConnection _conn;
         public Publisher()
         {
             
         }
-        public Publisher(IModel channel)
+        public Publisher(IConnection connection)
         {
-            this._channel = channel;
+            _conn = connection;
         }
-        public Publisher(IModel channel, string exchange)
+        public Publisher(IConnection connection, string exchange)
         {
-            this._channel = channel;
-            this._exchange = exchange;
+            _conn = connection;
+            _exchange = exchange;
         }
-        public Publisher(IModel channel, string exchange, string routingKey)
+        public Publisher(IConnection connection, string exchange, string routingKey)
         {
-            this._channel = channel;
-            this._exchange = exchange;
-            this._routingKey = routingKey;
+            _conn = connection;
+            _exchange = exchange;
+            _routingKey = routingKey;
+        }
+
+        public IConnection SetConnection
+        {
+            set
+            {
+                if (_conn == null)
+                    _conn = value;
+            }
+        }
+
+        /// <summary>
+        /// Set a name of the durable topic Exchange
+        /// </summary>
+        public string SetExchange
+        {
+            set
+            {
+                if (_exchange != value)
+                    _exchange = value;
+            }
+        }
+
+        /// <summary>
+        /// Set a name the Routing Key using to bind with the Exchange
+        /// </summary>
+        public string SetRoutingKey
+        {
+            set
+            {
+                if (_routingKey != value)
+                    _routingKey = value;
+            }
         }
 
         public void Init()
         {
-            if(this._channel==null)
-                this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
-            if (this._exchange == null) _exchange = Util.amqpConfig.amqp.exchange;
-            if (this._routingKey == null)
-                _routingKey = $"{Util.amqpConfig.amqp.baseRoutingKey}.{Util.amqpConfig.amqp.bindings[0]}";
+            try
+            {
+                _channel = _conn.CreateModel();
+                _channel.ExchangeDeclare(_exchange, ExchangeType.Topic, true, false, null);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public void Start()
@@ -43,14 +80,14 @@ namespace DriverAmqp.Sources
 
         }
 
-        public void Send(string message)
+        public void Publish(string message)
         {
-            Send(message, _exchange, _routingKey);
+            Publish(message, _exchange, _routingKey);
         }
 
-        public void Send(string message,string exchange, string routingKey)
+        public void Publish(string message,string exchange, string routingKey)
         {
-            if(WrapperConnection.GetAMQPConnection() != null)
+            if(_conn != null)
             {
                 var messageBytes = Encoding.UTF8.GetBytes(message);
                 if (this._channel != null)
@@ -61,19 +98,19 @@ namespace DriverAmqp.Sources
                     catch (Exception e)
                     {
 
-                        log.Error("Error Publisher Sending: "+e.Message);
+                        Console.WriteLine(e);
                     }
                     
                 else
                 {
                     try
                     {
-                        if (WrapperConnection.GetAMQPConnection() != null)
-                            this._channel = WrapperConnection.GetAMQPConnection().CreateModel();
+                        if (_conn != null)
+                            this._channel = _conn.CreateModel();
                     }
                     catch (Exception e)
                     {
-                        log.Error("Error Publisher: " + e.Message);
+                        Console.WriteLine(e);
                     }
                 }
             }
