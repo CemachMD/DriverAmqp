@@ -12,38 +12,19 @@ namespace DriverAmqp.Sources
     /// <summary>
     /// Clase RpcClient para solicitar o enviar comandos
     /// </summary>
-	public class RpcClient
+	public class RpcClient : BaseController
 	{
-        private IConnection connection;
-        private IModel _channel;
         private string replyQueueName;
         private EventingBasicConsumer consumer;
         private readonly BlockingCollection<string> respQueue = new BlockingCollection<string>();
         private IBasicProperties props;
 
-        private string _exchange, _routingKey;
 
-        public RpcClient()
-        {
-                              
-        }
+        public RpcClient(){}
 
-        public string SetExchange
-        {
-            set
-            {
-                _exchange = value;
-            }
-        }
-
-        public IConnection SetConnection
-        {
-            set
-            {
-                connection = value;
-            }
-        }
-
+        /// <summary>
+        /// Set a name the Routing Key using to bind with the Exchange
+        /// </summary>
         public string SetRoutingKey
         {
             set
@@ -77,7 +58,7 @@ namespace DriverAmqp.Sources
         public void Start()
         {
             if (_channel == null)
-                _channel = connection.CreateModel();
+                _channel = _conn.CreateModel();
 
             replyQueueName = _channel.QueueDeclare().QueueName;
             consumer = new EventingBasicConsumer(_channel);
@@ -134,7 +115,6 @@ namespace DriverAmqp.Sources
         public void Close()
         {
             _channel.Close();
-            if(connection!=null) connection.Close();
         }
 
     }

@@ -56,7 +56,7 @@ namespace DriverAmqp.Sources.Tests
             Assert.Equal("ok", resultrpc);
         }
 
-        private static string RpcServer_HandlerMessage(object sender, EventArgs e)
+        private static void RpcServer_HandlerMessage(object sender, EventArgs e)
         {
             var rpcServer = sender as RpcServer;
             var replyProps = rpcServer.CreateBasicProperties();
@@ -73,9 +73,6 @@ namespace DriverAmqp.Sources.Tests
             Console.WriteLine(msg.nome);
             Console.WriteLine(msg.idade);
 
-            
-
-            return "ok";
             
 
         }

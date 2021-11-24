@@ -4,11 +4,8 @@ using RabbitMQ.Client;
 
 namespace DriverAmqp.Sources
 {
-    public class Publisher
+    public class Publisher : BaseController
     {
-        private IModel _channel;
-        private string _exchange, _routingKey;
-        private IConnection _conn;
         public Publisher()
         {
             
@@ -29,26 +26,6 @@ namespace DriverAmqp.Sources
             _routingKey = routingKey;
         }
 
-        public IConnection SetConnection
-        {
-            set
-            {
-                if (_conn == null)
-                    _conn = value;
-            }
-        }
-
-        /// <summary>
-        /// Set a name of the durable topic Exchange
-        /// </summary>
-        public string SetExchange
-        {
-            set
-            {
-                if (_exchange != value)
-                    _exchange = value;
-            }
-        }
 
         /// <summary>
         /// Set a name the Routing Key using to bind with the Exchange
@@ -119,7 +96,7 @@ namespace DriverAmqp.Sources
         }
         public void Close()
         {
-            this._channel.Close();
+            _channel.Close();
         }
     }
 }

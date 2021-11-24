@@ -7,19 +7,14 @@ using RabbitMQ.Client.Events;
 
 namespace DriverAmqp.Sources
 {
-    public class Subscriber
+    public class Subscriber : BaseController
     {
-
-        private IConnection _conn;
-        private IModel _channel;
-
 
         public delegate void Handler(string mensage);
         public event Handler HandlerMessage;
 
-        private string _exchange;
-
-        private List<string> _bindings;
+        public delegate void HandlerWithArgs(object sender, EventArgs args);
+        public event HandlerWithArgs HandlerMessageWithArgs;
 
         private bool _saveFileBuffer = false;
         public bool SaveFileBuffer { 
@@ -53,29 +48,8 @@ namespace DriverAmqp.Sources
         }
 
         /// <summary>
-        /// Set a active connection to the RabbitMQ
+        /// Add the routing key to list for binding with the current exchange
         /// </summary>
-        public IConnection SetConnection
-        {
-            set
-            {
-                if (_conn == null)
-                    _conn = value;
-            }
-        }
-
-        /// <summary>
-        /// Set a name of the durable topic Exchange
-        /// </summary>
-        public string SetExchange
-        {
-            set
-            {
-                if (_exchange != value)
-                    _exchange = value;
-            }
-        }
-
         public void AddRoutingKey(string routingKey)
         {
             _bindings.Add(routingKey);
@@ -130,10 +104,6 @@ namespace DriverAmqp.Sources
                         {
                             var body = ea.Body;
 
-                            var props = ea.BasicProperties;
-                            var replyProps = _channel.CreateBasicProperties();
-                            replyProps.CorrelationId = props.CorrelationId;
-
                             try
                             {
                                 string message = Encoding.UTF8.GetString(body.ToArray());
@@ -144,6 +114,7 @@ namespace DriverAmqp.Sources
                                 }
 
                                 HandlerMessage(message);
+                                HandlerMessageWithArgs(this, ea);
 
                             }
                             catch (Exception e)

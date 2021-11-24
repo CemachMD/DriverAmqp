@@ -7,12 +7,10 @@ using System.Collections.Generic;
 
 namespace DriverAmqp.Sources
 {
-    public class RpcServer
+    public class RpcServer : BaseController
     {
 
-        private IModel _channel;
         private EventingBasicConsumer consumer;
-        private IConnection _conn;
 
         public delegate string Handler(string body);
         public event Handler HandlerMessage;
@@ -20,8 +18,6 @@ namespace DriverAmqp.Sources
         public delegate void HandlerWithArgs(object sender, EventArgs args);
         public event HandlerWithArgs HandlerMessageWithArgs;
 
-        private string _exchange;
-        private List<string> _bindings;
         private bool _isRunning = false;
 
         public string response;
@@ -48,32 +44,7 @@ namespace DriverAmqp.Sources
             _conn = connection;
             _exchange = exchange;
         }
-        /// <summary>
-        /// Set a active connection to the RabbitMQ
-        /// </summary>
-        public IConnection SetConnection { 
-            set {
-                if( _conn == null )
-                    _conn = value; 
-            } 
-        }
 
-        /// <summary>
-        /// Set a name of the durable topic Exchange
-        /// </summary>
-        public string SetExchange
-        {
-            set
-            {
-                if (_exchange != value)
-                    _exchange = value;
-            }
-        }
-
-        public void AddRoutingKey(string routingKey)
-        {
-            _bindings.Add(routingKey);
-        }
 
 
         public RpcServer(IConnection connection, string exchange, string routingKey)
@@ -84,6 +55,13 @@ namespace DriverAmqp.Sources
             _bindings.Add(routingKey);
         }
 
+        /// <summary>
+        /// Add the routing key to list for binding with the current exchange
+        /// </summary>
+        public void AddRoutingKey(string routingKey)
+        {
+            _bindings.Add(routingKey);
+        }
         public void Init()
         {
             try
