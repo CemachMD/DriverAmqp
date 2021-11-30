@@ -83,8 +83,14 @@ namespace DriverAmqp.Sources
             {
                          
                 consumer = new EventingBasicConsumer(_channel);
+                QueueDeclareOk queue;
                 
-                var queue = _channel.QueueDeclare();
+                if(_queue !=null && _queue != "")
+                {
+                    queue = _channel.QueueDeclare(_queue, durable: true, autoDelete:false, exclusive:false);
+                }
+                else
+                    queue = _channel.QueueDeclare();
 
                 foreach(var bing in _bindings)
                 {
