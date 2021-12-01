@@ -90,6 +90,8 @@ namespace DriverAmqp.Sources
                     try
                     {
                         var consumer = new EventingBasicConsumer(this._channel);
+                        
+                        //Declaring queue
                         QueueDeclareOk queue;
 
                         if (_queue != null && _queue != "")

@@ -150,7 +150,14 @@ namespace DriverAmqp.Sources
 
                 consumer = new EventingBasicConsumer(_channel);
 
-                var queue = _channel.QueueDeclare();
+                QueueDeclareOk queue;
+
+                if (_queue != null && _queue != "")
+                {
+                    queue = _channel.QueueDeclare(_queue, durable: true, autoDelete: false, exclusive: false);
+                }
+                else
+                    queue = _channel.QueueDeclare();
 
                 foreach (var bing in _bindings)
                 {
@@ -196,6 +203,19 @@ namespace DriverAmqp.Sources
 
             _channel.BasicPublish(
                             exchange: _exchange,
+                            routingKey: replyTo,
+                            basicProperties: replyProps,
+                            body: dataBytes);
+
+            _channel.BasicAck(deliveryTag: deliveryTag, multiple: false);
+        }
+
+        public void Publish(string data, string exchange, string replyTo, IBasicProperties replyProps, ulong deliveryTag)
+        {
+            var dataBytes = Encoding.UTF8.GetBytes(data);
+
+            _channel.BasicPublish(
+                            exchange: exchange,
                             routingKey: replyTo,
                             basicProperties: replyProps,
                             body: dataBytes);

@@ -21,6 +21,7 @@ namespace DriverAmqp
             rpcServer.SetConnection = amqp.GetConnection;
             rpcServer.SetExchange = "API.SQL";
             rpcServer.AddRoutingKey("api.RpcServerTest");
+            rpcServer.SetQueue = "q_TESTE_SQL";
             rpcServer.HandlerMessage += RpcServer_HandlerMessage;
             rpcServer.Init();
             rpcServer.Start();
