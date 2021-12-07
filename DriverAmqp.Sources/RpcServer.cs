@@ -4,21 +4,76 @@ using System.Text;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DriverAmqp.Sources
 {
+
+    public class RpcServer<T> : RpcServer
+    {
+        public delegate Task HandlerTaskWithArgs(object sender, EventArgs args);
+        public event HandlerTaskWithArgs HandlerTaskMessageWithArgs;
+
+        public override void Listen()
+        {
+            if (_conn != null)
+            {
+
+                consumer = new EventingBasicConsumer(_channel);
+
+                QueueDeclareOk queue;
+
+                if (_queue != null && _queue != "")
+                {
+                    queue = _channel.QueueDeclare(_queue, durable: true, autoDelete: false, exclusive: false);
+                }
+                else
+                    queue = _channel.QueueDeclare();
+
+                foreach (var bing in _bindings)
+                {
+                    _channel.QueueBind(queue.QueueName, _exchange, bing);
+                }
+
+                _channel.BasicConsume(queue: queue.QueueName, autoAck: false, consumer: consumer);
+                _isRunning = true;
+
+                consumer.Received += (model, ea) =>
+                {
+
+                    var body = ea.Body;
+                    var props = ea.BasicProperties;
+                    var s = ea.RoutingKey;
+                    var replyProps = _channel.CreateBasicProperties();
+                    replyProps.CorrelationId = props.CorrelationId;
+
+                    try
+                    {
+                        string bodyStr = Encoding.UTF8.GetString(body.ToArray());
+
+                        HandlerTaskMessageWithArgs(this, ea);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
+
+                };
+            }
+        }
+    }
+
     public class RpcServer : BaseController
     {
 
-        private EventingBasicConsumer consumer;
+        protected EventingBasicConsumer consumer;
+        protected bool _isRunning = false;
 
         public delegate string Handler(string body);
         public event Handler HandlerMessage;
 
         public delegate void HandlerWithArgs(object sender, EventArgs args);
-        public event HandlerWithArgs HandlerMessageWithArgs;
-
-        private bool _isRunning = false;
+        public virtual event HandlerWithArgs HandlerMessageWithArgs;      
 
         public string response;
         
@@ -143,7 +198,7 @@ namespace DriverAmqp.Sources
             }           
         }
 
-        public void Listen()
+        public virtual void Listen()
         {
             if (_conn != null)
             {
@@ -181,7 +236,6 @@ namespace DriverAmqp.Sources
                         string bodyStr = Encoding.UTF8.GetString(body.ToArray());
 
                          HandlerMessageWithArgs(this, ea);
-
                     }
                     catch (Exception ex)
                     {
@@ -223,6 +277,10 @@ namespace DriverAmqp.Sources
             _channel.BasicAck(deliveryTag: deliveryTag, multiple: false);
         }
 
+        public void Ack(ulong deliveryTag)
+        {
+            _channel.BasicAck(deliveryTag: deliveryTag, multiple: false);
+        }
         public void NoAck(ulong deliveryTag)
         {
             _channel.BasicNack(deliveryTag: deliveryTag, multiple: false, requeue:true);

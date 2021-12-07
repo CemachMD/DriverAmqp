@@ -9,29 +9,28 @@ namespace DriverAmqp.Sources
 
         private static WrapperConnection _instance;
         private static readonly object _lock = new object();
-        private ConnectionFactory factory;
+        private ConnectionFactory _factory;
         private static IConnection _conn;
         private static AmqpConfig _amqpConfig;
 
-        private WrapperConnection()
-        {          
-
-        }
+        private WrapperConnection(){}
 
         private void CreateFactory()
         {
-            this.factory = new ConnectionFactory()
+            _factory = new ConnectionFactory()
             {
                 HostName = _amqpConfig.hostName,
                 UserName = _amqpConfig.userName,
                 Password = _amqpConfig.password,
                 
             };
+            if (_amqpConfig.virtualHost == "")
+                _amqpConfig.virtualHost = null;
             if (_amqpConfig.virtualHost != null)
-                factory.VirtualHost = _amqpConfig.virtualHost; 
+                _factory.VirtualHost = _amqpConfig.virtualHost;
 
-            factory.AutomaticRecoveryEnabled = true;
-            factory.NetworkRecoveryInterval = TimeSpan.FromSeconds(5);
+            _factory.AutomaticRecoveryEnabled = true;
+            _factory.NetworkRecoveryInterval = TimeSpan.FromSeconds(5);
         }
 
         public void Connect()
@@ -44,13 +43,11 @@ namespace DriverAmqp.Sources
         {
             try
             {
-                factory.RequestedConnectionTimeout = TimeSpan.FromSeconds(5);
-                _conn = this.factory.CreateConnection();
-                Console.WriteLine("Connection created Successfully!");
+                _factory.RequestedConnectionTimeout = TimeSpan.FromSeconds(5);
+                _conn = _factory.CreateConnection();
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error to connect RabbitMQ: " + e.Message);
                 Thread.Sleep(5000);
                 TryConnect();
             }
