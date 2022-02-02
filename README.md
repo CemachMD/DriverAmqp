@@ -2,9 +2,60 @@
 
 Implementing in .NET Standard 2.1 for compatibility with .NET Core and .NET Framework
 
+## Configuring a Subscriber
+
+### Create Connection
+Example:
+
+```csharp
+// Load Config using static tool
+var amqpConfig = Util.LoadAmqpConfig();
+
+//Get instance and set the config
+var amqp = WrapperConnection.GetInstance();
+amqp.SetConfig = amqpConfig;
+
+//Try to connect
+amqp.Connect();
+```
+
+```csharp
+//Define the basic parameters
+exchange = "API.SQL";
+routinKey = "routingKeyPubSub";
+
+//Create a subscriber using a amqp object
+var sub = new Subscriber();
+sub.SetConnection = amqp.GetConnection;
+sub.SetExchange = exchange;
+sub.AddRoutingKey( routinKey);
+sub.HandlerMessage += Sub_HandlerMessage;
+
+//Starting process
+sub.Init();
+sub.Start();
+sub.Listen();
+
+private void Sub_HandlerMessage(string mensage)
+{
+  message = JsonConvert.DeserializeObject<Message>(mensage);
+  
+  //Handling the message ...
+  
+}
+
+private class Message
+{
+  public string nome { get; set; }
+  public string idade { get; set; }
+ }
+
+```
+
+
 ## Configuring Pattern RpcServer
 
-### Connection
+### Create Connection
 
 Example:
 
