@@ -62,10 +62,10 @@ namespace DriverAmqp.Sources
                 _channel = _conn.CreateModel();
                 _channel.ExchangeDeclare(_exchange, ExchangeType.Topic, true, false, null);
             }
-            catch (Exception)
+            catch (Exception e)
             {
 
-                throw;
+                throw new Exception("Error to Init Creating Channel :: " + e.Message);
             }
             
         }
@@ -129,7 +129,7 @@ namespace DriverAmqp.Sources
                             }
                             catch (Exception e)
                             {
-                                Console.WriteLine(" [.] " + e.Message);
+                                throw new Exception("Error to HandlerMessageWithArgs :: " + e.Message);
 
                             }
                             
@@ -151,7 +151,7 @@ namespace DriverAmqp.Sources
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e);
+                        throw new Exception("Error to Create Channel :: " + e.Message);
                     }
                 }
             }

@@ -75,7 +75,7 @@ namespace DriverAmqp.Sources
                     catch (Exception e)
                     {
 
-                        Console.WriteLine(e);
+                        throw new Exception("Error to Publish :: "+e.Message);
                     }
                     
                 else
@@ -87,7 +87,7 @@ namespace DriverAmqp.Sources
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e);
+                        throw new Exception("Error to Create Channel :: " + e.Message);
                     }
                 }
             }

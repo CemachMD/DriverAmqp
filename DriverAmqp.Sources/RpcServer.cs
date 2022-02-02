@@ -55,7 +55,7 @@ namespace DriverAmqp.Sources
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        throw new Exception("Error to HandlerTaskMessageWithArgs :: " + ex.Message);
                     }
 
                 };
@@ -124,10 +124,9 @@ namespace DriverAmqp.Sources
                 _channel = _conn.CreateModel();
                 _channel.ExchangeDeclare(_exchange, ExchangeType.Topic, true, false, null);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                throw new Exception("Error to Create Channel :: " + ex.Message);
             }
         }
 
@@ -173,7 +172,7 @@ namespace DriverAmqp.Sources
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        throw new Exception("Error to HandlerMessage :: " + ex.Message);
                     }
                     finally
                     {
@@ -230,7 +229,7 @@ namespace DriverAmqp.Sources
                     var s = ea.RoutingKey;
                     var replyProps = _channel.CreateBasicProperties();
                     replyProps.CorrelationId = props.CorrelationId;
-
+                    
                     try
                     {
                         string bodyStr = Encoding.UTF8.GetString(body.ToArray());
@@ -239,7 +238,7 @@ namespace DriverAmqp.Sources
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        throw new Exception("Error to HandlerMessageWithArgs :: " + ex.Message);
                     }
 
                 };
@@ -279,7 +278,7 @@ namespace DriverAmqp.Sources
 
         public void Ack(ulong deliveryTag)
         {
-            _channel.BasicAck(deliveryTag: deliveryTag, multiple: false);
+            _channel.BasicAck(deliveryTag: deliveryTag, multiple: true);
         }
         public void NoAck(ulong deliveryTag)
         {

@@ -31,7 +31,6 @@ namespace DriverAmqp.Sources.Tests
         public void Run()
         {
             //Arrange
-            var chPub = amqp.CreateChannel();
 
             var sub = new Subscriber();
             sub.SetConnection = amqp.GetConnection;
