@@ -8,7 +8,9 @@ Implementing in .NET Standard 2.1 for compatibility with .NET Core and .NET Fram
 Example:
 
 ```csharp
-// Load Config using static tool
+using DriverAmqp.Sources
+
+// Load Config using static tool, name of file amqpConfig.json
 var amqpConfig = Util.LoadAmqpConfig();
 
 //Get instance and set the config
